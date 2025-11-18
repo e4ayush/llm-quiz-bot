@@ -1,11 +1,15 @@
 # Start from a standard Python 3.11 image
 FROM python:3.11-slim
 
+# --- ADD THIS LINE ---
+# This forces Python to print logs instantly instead of buffering them.
+ENV PYTHONUNBUFFERED=1
+# --------------------
+
 # Set the working directory inside the container
 WORKDIR /app
 
-# 1. This is the fix: Manually install all of Playwright's
-#    system dependencies as the ROOT user.
+# 1. Manually install all of Playwright's system dependencies
 RUN apt-get update && apt-get install -y \
     libnss3 \
     libnspr4 \
@@ -35,11 +39,11 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# 3. Now, install just the browser (no '--with-deps' needed)
+# 3. Now, install just the browser
 RUN playwright install chromium
 
 # 4. Copy the rest of our app code
 COPY . .
 
-# 5. Tell Render what command to run (same as your Procfile)
+# 5. Tell Render what command to run
 CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "main:app"]
